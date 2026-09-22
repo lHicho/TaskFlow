@@ -1,113 +1,162 @@
-import { Task } from '../../src/domain/Task.js';
-import { Project } from '../../src/domain/Project.js';
+import { jest } from '@jest/globals';
+import { Project } from '../src/Project.js';
+import { Task } from '../src/Task.js';
 
 describe('Project Class', () => {
+  let project;
+  let mockTask;
 
-    let task1 = new Task("test1", "test desc", "medium", new Date);
-    let task2 = new Task("test2", "", "medium", new Date);
-    let task3 = new Task("test3", "test 3   hello", "medium", new Date);
+  beforeEach(() => {
+    project = new Project('Initial Title', 'Initial Description');
+    mockTask = new Task('Test Task', 'Task Description');
+  });
 
-    describe('Initialization Project', () => {
-        test('should create a valid Project with default status, uuid, and timestamp', () => {
-            const Project = new Project();
-
-            expect(task.title).toBe('Test Title');
-            expect(task.description).toBe('Test Description');
-            expect(task.status).toBe('todo');
-            
-            // Check UUID format
-            expect(typeof task.id).toBe('string');
-            expect(task.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
-            
-            // Check createdAt is a valid Date
-            expect(task.createdAt).toBeInstanceOf(Date);
-        });
-
-        test('should generate unique IDs for different tasks', () => {
-            const task1 = new Task('Task 1', 'Desc 1');
-            const task2 = new Task('Task 2', 'Desc 2');
-
-            expect(task1.id).not.toBe(task2.id);
-        });
-
-        test('should throw an error if constructor receives invalid title or description', () => {
-            expect(() => new Task('', 'Desc')).toThrow("Title must be a non-empty string.");
-            expect(() => new Task('Title', '')).toThrow("Description must be a non-empty string.");
-            expect(() => new Task(null, 'Desc')).toThrow("Title must be a non-empty string.");
-        });
+  describe('Constructor & Core Instantiation', () => {
+    test('should create a Project with valid default and assigned values', () => {
+      expect(project.id).toBeDefined();
+      expect(typeof project.id).toBe('string');
+      expect(project.title).toBe('Initial Title');
+      expect(project.description).toBe('Initial Description');
+      expect(project.createdAt).toBeInstanceOf(Date);
+      expect(project.updatedAt).toBeInstanceOf(Date);
+      expect(project.dueDate).toBeNull();
+      expect(project.tasks).toEqual([]);
     });
 
-    // 2. Setters & Validation Tests
-    describe('Setters & Validation', () => {
-        test('should update title and description with valid values', () => {
-            const task = new Task('Old Title', 'Old Desc');
+    test('should assign due date correctly if passed in constructor', () => {
+      const p = new Project('Title', 'Desc', '2026-12-31');
+      expect(p.dueDate).toBeInstanceOf(Date);
+      expect(p.dueDate.getFullYear()).toBe(2026);
+    });
+  });
 
-            task.title = 'New Title';
-            task.description = 'New Desc';
-
-            expect(task.title).toBe('New Title');
-            expect(task.description).toBe('New Desc');
-        });
-
-        test('should throw error when updating title with invalid values', () => {
-            const task = new Task('Title', 'Desc');
-
-            expect(() => { task.title = ''; }).toThrow("Title must be a non-empty string.");
-            expect(() => { task.title = '   '; }).toThrow("Title must be a non-empty string.");
-            expect(() => { task.title = 123; }).toThrow("Title must be a non-empty string.");
-            expect(() => { task.title = null; }).toThrow("Title must be a non-empty string.");
-            
-            // Ensure previous valid title remains unchanged
-            expect(task.title).toBe('Title');
-        });
-
-        test('should throw error when updating description with invalid values', () => {
-            const task = new Task('Title', 'Desc');
-
-            expect(() => { task.description = ''; }).toThrow("Description must be a non-empty string.");
-            expect(() => { task.description = '   '; }).toThrow("Description must be a non-empty string.");
-            expect(() => { task.description = undefined; }).toThrow("Description must be a non-empty string.");
-
-            // Ensure previous valid description remains unchanged
-            expect(task.description).toBe('Desc');
-        });
+  describe('Getters & Setters Validation', () => {
+    test('should update title and refresh updatedAt timestamp', () => {
+      const initialUpdatedAt = project.updatedAt;
+      project.title = '  Updated Title  ';
+      expect(project.title).toBe('Updated Title');
+      expect(project.updatedAt.getTime()).toBeGreaterThanOrEqual(initialUpdatedAt.getTime());
     });
 
-    // 3. State Management Method Tests
-    describe('State Management', () => {
-        test('should correctly change status using state methods', () => {
-            const task = new Task('Title', 'Desc');
-            expect(task.status).toBe('todo');
-
-            task.markInProgress();
-            expect(task.status).toBe('in-progress');
-
-            task.markComplete();
-            expect(task.status).toBe('complete');
-
-            task.markTodo();
-            expect(task.status).toBe('todo');
-        });
+    test('should throw error when setting title to an empty or non-string value', () => {
+      expect(() => { project.title = ''; }).toThrow('Title must be a non-empty string.');
+      expect(() => { project.title = '   '; }).toThrow('Title must be a non-empty string.');
+      expect(() => { project.title = 123; }).toThrow('Title must be a non-empty string.');
     });
 
-    // 4. Read-Only Protection Tests
-    describe('Read-Only Enforcement', () => {
-        test('should prevent direct reassignment of getters', () => {
-            const task = new Task('Title', 'Desc');
+    test('should update description or fall back to default when empty', () => {
+      project.description = '  New Description  ';
+      expect(project.description).toBe('New Description');
 
-            // Trying to overwrite read-only properties should fail or throw in strict mode
-            expect(() => {
-                task.id = 'new-id';
-            }).toThrow();
-
-            expect(() => {
-                task.createdAt = new Date();
-            }).toThrow();
-
-            expect(() => {
-                task.status = 'complete';
-            }).toThrow();
-        });
+      project.description = '   ';
+      expect(project.description).toBe('No Description');
     });
 
+    test('should throw error when setting non-string description', () => {
+      expect(() => { project.description = null; }).toThrow('Description must be a string.');
+      expect(() => { project.description = 456; }).toThrow('Description must be a string.');
+    });
+  });
+
+  describe('Due Date Setter & Edge Cases', () => {
+    test('should set valid Date object from valid string or Date instance', () => {
+      project.dueDate = '2026-10-15';
+      expect(project.dueDate).toBeInstanceOf(Date);
+
+      const dateObj = new Date('2026-11-20');
+      project.dueDate = dateObj;
+      expect(project.dueDate).toEqual(dateObj);
+    });
+
+    test('should clear due date when set to null, undefined, or empty string', () => {
+      project.dueDate = '2026-10-15';
+      project.dueDate = null;
+      expect(project.dueDate).toBeNull();
+
+      project.dueDate = '2026-10-15';
+      project.dueDate = '';
+      expect(project.dueDate).toBeNull();
+
+      project.dueDate = '2026-10-15';
+      project.dueDate = undefined;
+      expect(project.dueDate).toBeNull();
+    });
+
+    test('should throw error for invalid date inputs', () => {
+      expect(() => { project.dueDate = 'invalid-date-string'; }).toThrow(/Invalid date string/);
+      expect(() => { project.dueDate = new Date('invalid'); }).toThrow(/Invalid Date object/);
+      expect(() => { project.dueDate = 123456789; }).toThrow('Due date must be a string, Date object, or null.');
+    });
+  });
+
+  describe('Task Operations & Immutability', () => {
+    test('should add a valid Task instance', () => {
+      project.addTask(mockTask);
+      expect(project.tasks.length).toBe(1);
+      expect(project.getTaskById(mockTask.id)).toBe(mockTask);
+    });
+
+    test('should throw error when adding invalid task object', () => {
+      expect(() => { project.addTask({}); }).toThrow('Task must be an instance of Task.');
+      expect(() => { project.addTask('not-a-task'); }).toThrow('Task must be an instance of Task.');
+    });
+
+    test('should add multiple tasks via addTasks', () => {
+      const task2 = new Task('Task 2', 'Desc 2');
+      project.addTasks([mockTask, task2]);
+      expect(project.tasks.length).toBe(2);
+    });
+
+    test('should throw error if addTasks is not passed an array', () => {
+      expect(() => { project.addTasks(mockTask); }).toThrow('Invalid input: input must be an array.');
+    });
+
+    test('should remove a task by ID', () => {
+      project.addTask(mockTask);
+      expect(project.tasks.length).toBe(1);
+
+      project.removeTask(mockTask.id);
+      expect(project.tasks.length).toBe(0);
+      expect(project.getTaskById(mockTask.id)).toBeNull();
+    });
+
+    test('should clear all tasks', () => {
+      const task2 = new Task('Task 2', 'Desc 2');
+      project.addTasks([mockTask, task2]);
+      expect(project.tasks.length).toBe(2);
+
+      project.clearTasks();
+      expect(project.tasks.length).toBe(0);
+    });
+
+    test('should enforce getter immutability (copies, not direct references)', () => {
+      project.addTask(mockTask);
+      const tasksCopy = project.tasks;
+      tasksCopy.push('external-garbage');
+
+      expect(project.tasks.length).toBe(1);
+      expect(project.getAllTasks().length).toBe(1);
+    });
+  });
+
+  describe('Dynamic Progress Getter', () => {
+    test('should return 0 progress when project has no tasks', () => {
+      expect(project.progress).toBe(0);
+    });
+
+    test('should accurately calculate percentage based on completed tasks', () => {
+      const t1 = new Task('T1', 'D1');
+      const t2 = new Task('T2', 'D2');
+      
+      project.addTasks([t1, t2]);
+      expect(project.progress).toBe(0);
+
+      // Simulate completion on task 1
+      t1.status = 'done';
+      expect(project.progress).toBe(50);
+
+      t2.status = 'complete';
+      expect(project.progress).toBe(100);
+    });
+  });
 });
