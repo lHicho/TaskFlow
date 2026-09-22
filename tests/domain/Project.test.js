@@ -1,11 +1,15 @@
 import { Task } from '../../src/domain/Task.js';
+import { Project } from '../../src/domain/Project.js';
 
-describe('Task Class', () => {
+describe('Project Class', () => {
 
-    // 1. Constructor & Initialization Tests
-    describe('Initialization', () => {
-        test('should create a valid task with default status, uuid, and timestamp', () => {
-            const task = new Task('Test Title', 'Test Description');
+    let task1 = new Task("test1", "test desc", "medium", new Date);
+    let task2 = new Task("test2", "", "medium", new Date);
+    let task3 = new Task("test3", "test 3   hello", "medium", new Date);
+
+    describe('Initialization Project', () => {
+        test('should create a valid Project with default status, uuid, and timestamp', () => {
+            const Project = new Project();
 
             expect(task.title).toBe('Test Title');
             expect(task.description).toBe('Test Description');

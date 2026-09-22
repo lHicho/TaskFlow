@@ -1,44 +1,30 @@
-export const STATUS = Object.freeze({
-    TODO: "todo",
-    IN_PROGRESS: "in-progress",
-    DONE: "done",
-    COMPLETE: "complete",
-});
+import { Task } from "./Task.js";
 
-export const PRIORITY = Object.freeze({
-    LOW: "low",
-    MEDIUM: "medium",
-    HIGH: "high",
-});
+export class Project {
 
-export class Task {
-    #status = STATUS.TODO;
     #id;
     #createdAt;
     #title;
     #description;
-    #priority = PRIORITY.MEDIUM;
-    #dueDate = null;
+    #tasks = [];
+    #dueDate;
     #updatedAt;
 
-    constructor(title = "", description = "", priority = PRIORITY.MEDIUM, dueDate = null) {
+    constructor(title = "", description = "", dueDate = null) {
         this.#id = crypto.randomUUID();
         this.#createdAt = new Date();
-        this.#updatedAt = new Date();
         this.title = title;
         this.description = description;
-        this.priority = priority;
         this.dueDate = dueDate;
     }
 
-    get status() { return this.#status; }
     get id() { return this.#id; }
     get createdAt() { return this.#createdAt; }
     get title() { return this.#title; }
     get description() { return this.#description; }
-    get priority() { return this.#priority; }
     get dueDate() { return this.#dueDate; }
     get updatedAt() { return this.#updatedAt; }
+    get tasks() { return [...this.#tasks] }
 
     set title(newTitle) {
         if (typeof newTitle !== "string" || newTitle.trim() === "") { throw new Error("Title must be a non-empty string."); }
@@ -46,21 +32,9 @@ export class Task {
         this.#updatedAt = new Date();
     }
     set description(newDescription) {
-        if (typeof newDescription !== "string" || newDescription.trim() === "") { throw new Error("Description must be a non-empty string."); }
+        if (typeof newDescription !== "string") { throw new Error("Description must be a non-empty string."); }
+        if (newDescription.trim() === "") { this.#description = "No Description"; return; }
         this.#description = newDescription.trim();
-        this.#updatedAt = new Date();
-    }
-    set priority(newPriority) {
-        if (typeof newPriority !== "string" || newPriority.trim() === "") { throw new Error("Priority must be a non-empty string."); }
-
-        const normalizedPriority = newPriority.trim().toLowerCase();
-        const validPriorities = Object.values(PRIORITY);
-
-        if (!validPriorities.includes(normalizedPriority)) {
-            throw new Error("Priority must be one of: low, medium, high.");
-        }
-
-        this.#priority = normalizedPriority;
         this.#updatedAt = new Date();
     }
     set dueDate(newDueDate) {
@@ -88,20 +62,43 @@ export class Task {
         this.#updatedAt = new Date();
     }
 
-    markDone() {
-        this.#status = STATUS.DONE;
+    addTask(task) {
+        if (task instanceof Task === false) { throw new Error("Task must be a Task object"); }
+        this.#tasks.push(task);
         this.#updatedAt = new Date();
     }
-    markComplete() {
-        this.#status = STATUS.COMPLETE;
+
+    addTasks(taskArr) {
+        if (!Array.isArray(taskArr)) { throw new Error("Invalid input: input must be an Array"); }
+        for (let i = 0; i < taskArr.length; i++) {
+            this.addTask(taskArr[i]);
+        }
         this.#updatedAt = new Date();
     }
-    markInProgress() {
-        this.#status = STATUS.IN_PROGRESS;
+
+    removeTask(id) {
+        const initialLength = this.#tasks.length;
+        this.#tasks = this.#tasks.filter(task => task.id !== id);
+        if (this.#tasks.length !== initialLength) {
+            this.#updatedAt = new Date();
+        }
+    }
+    clearTasks() {
+        this.#tasks = [];
         this.#updatedAt = new Date();
     }
-    markTodo() {
-        this.#status = STATUS.TODO;
-        this.#updatedAt = new Date();
+    getTaskById(id) {
+        return this.#tasks.find((task) => task.id === id) || null;
     }
+    getAllTasks() {
+        return [...this.#tasks];
+    }
+    getTasksByStatus(status) {
+        let arr = [];
+        for (let i = 0; i < this.#tasks.length; i++) {
+            if (this.#tasks[i].status === status) { arr.push(this.#tasks[i]) }
+        }
+        return arr;
+    }
+
 }
