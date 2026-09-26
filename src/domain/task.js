@@ -104,4 +104,23 @@ export class Task {
         this.#status = STATUS.TODO;
         this.#updatedAt = new Date();
     }
+
+    static fromJSON(data) {
+        if (!data) return null;
+
+        const task = new Task(
+            data.title,
+            data.description,
+            data.priority,
+            data.dueDate ? new Date(data.dueDate) : null
+        )
+
+        if (data.id) task.id = data.id;
+        if (data.status) task.status = data.status;
+        if (data.createdAt) task.createdAt = new Date(data.createdAt);
+        if (data.updatedAt) task.updatedAt = new Date(data.updatedAt);
+
+        return task;
+    }
 }
+

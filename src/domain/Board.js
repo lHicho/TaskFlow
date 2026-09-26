@@ -1,5 +1,4 @@
 import { Project } from "./Project.js";
-import { Task } from "./Task.js";
 
 export class Board {
 
@@ -10,7 +9,7 @@ export class Board {
     #projects = [];
     #updatedAt;
 
-    constructor(title = "", description = "", dueDate = null) {
+    constructor(title = "", description = "") {
         this.#id = crypto.randomUUID();
         this.#createdAt = new Date();
         this.title = title;
@@ -45,7 +44,11 @@ export class Board {
     addProjects(projectArr) {
         if (!Array.isArray(projectArr)) { throw new Error("Invalid input: input must be an Array"); }
         for (let i = 0; i < projectArr.length; i++) {
-            this.addProject(projectArr[i]);
+            try {
+                this.addProject(projectArr[i]);
+            } catch (err) {
+                console.error("coldn't add project: ", err);
+            }
         }
         this.#updatedAt = new Date();
     }
@@ -65,5 +68,24 @@ export class Board {
     }
     getAllProjects() {
         return [...this.#projects];
+    }
+
+    static fromJSON(data) {
+        if (!data) return null;
+
+        const board = new Board(
+            data.title,
+            data.description,
+        );
+
+        if (data.id) board.id = data.id;
+        if (data.createdAt) board.createdAt = new Date(data.createdAt);
+        if (data.updatedAt) board.updatedAt = new Date(data.updatedAt);
+
+        if (Array.isArray(data.projects)) {
+            board.projects = data.projects.map(projData => Project.fromJSON(projData));
+        }
+
+        return board;
     }
 }

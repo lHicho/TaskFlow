@@ -1,4 +1,4 @@
-import { Task } from "./Task.js";
+import { Task } from "./task.js";
 
 export class Project {
 
@@ -71,7 +71,11 @@ export class Project {
     addTasks(taskArr) {
         if (!Array.isArray(taskArr)) { throw new Error("Invalid input: input must be an Array"); }
         for (let i = 0; i < taskArr.length; i++) {
-            this.addTask(taskArr[i]);
+            try {
+                this.addTask(taskArr[i]);
+            } catch (err) {
+                console.error("Couldn't add task: ", err)
+            }
         }
         this.#updatedAt = new Date();
     }
@@ -101,4 +105,24 @@ export class Project {
         return arr;
     }
 
+
+    static fromJSON(data) {
+        if (!data) return null;
+
+        const project = new Project(
+            data.title,
+            data.description,
+            data.dueDate ? new Date(data.dueDate) : null
+        )
+
+        if (data.id) project.id = data.id;
+        if (data.createdAt) project.createdAt = new Date(data.createdAt);
+        if (data.updatedAt) project.updatedAt = new Date(data.updatedAt);
+
+        if (Array.isArray(data.tasks)) {
+            project.tasks = data.tasks.map(taskData => Task.fromJSON(taskData));
+        }
+
+        return project;
+    }
 }

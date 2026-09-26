@@ -1,6 +1,5 @@
-import { jest } from '@jest/globals';
-import { Project } from '../src/Project.js';
-import { Task } from '../src/Task.js';
+import { Project } from '../../src/domain/Project.js';
+import { Task } from '..../src/domain/Task.js';
 
 describe('Project Class', () => {
   let project;
